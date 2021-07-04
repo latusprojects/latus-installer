@@ -16,5 +16,12 @@
     "psr-4": {
       "Latus\\Installer\\": "src/"
     }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Latus\\Installer\\InstallerServiceProvider"
+      ]
+    }
   }
 }
