@@ -1,0 +1,20 @@
+{
+  "name": "latusprojects/latus-installer",
+  "type": "library",
+  "description": "",
+  "authors": [
+    {
+      "name": "Max Latussek",
+      "email": "latusschnecke@gmail.com"
+    }
+  ],
+  "require": {
+    "php": "^8.0",
+    "laravel/framework": "8.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Latus\\Installer\\": "src/"
+    }
+  }
+}
