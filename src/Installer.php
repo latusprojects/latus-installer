@@ -4,12 +4,16 @@
 namespace Latus\Installer;
 
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Jackiedo\DotenvEditor\Facades\DotenvEditor;
+use Latus\Database\Seeders\DatabaseSeeder;
+use Latus\Latus\Repositories\Contracts\UserRepository;
 use Symfony\Component\Console\Command\Command;
 
 class Installer
@@ -156,6 +160,31 @@ class Installer
         self::verifyDatabaseDetails($this->database_details);
     }
 
+    protected function insertUser(UserRepository $userRepository): Model
+    {
+        return $userRepository->create([
+            'name' => $this->user_details['username'],
+            'email' => $this->user_details['email'],
+            'password' => Hash::make($this->user_details['password']),
+        ]);
+    }
+
+    protected function fillDatabase()
+    {
+        $this->printToConsole('Filling database...');
+
+        $this->printToConsole('Seeding...');
+        Artisan::call('db:seed', ['--class' => DatabaseSeeder::class]);
+        $this->printToConsole('Seeded!');
+
+        $this->printToConsole('Inserting specified details...');
+
+        $user = $this->insertUser(app(UserRepository::class));
+
+        $this->printToConsole('User created!');
+
+    }
+
     public function commenceInstallation()
     {
         $this->tryDetails();
@@ -163,6 +192,9 @@ class Installer
         $this->updateEnvironment();
 
         $this->runMigrations();
+
+        $this->fillDatabase();
+
     }
 
     protected function printToConsole(string $message, string $type = 'info')
