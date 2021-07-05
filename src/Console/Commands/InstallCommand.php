@@ -37,7 +37,7 @@ class InstallCommand extends Command
     {
 
         $details = [
-            'driver' => $this->ask('Driver', 'mysql'),
+            'driver' => $this->ask('Driver (mysql,postgres,sqlite,sqlsrv)', 'mysql'),
             'host' => $this->ask('Host', 'localhost'),
             'username' => $this->ask('Username'),
             'database' => $this->ask('Database'),
