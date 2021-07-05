@@ -18,4 +18,16 @@ class InstallerServiceProvider extends ServiceProvider
             InstallCommand::class,
         ]);
     }
+
+    /**
+     * Bootstrap services.
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        if (!Installer::isInstalled()) {
+            //$this->loadRoutesFrom(__DIR__ . '/../routes');
+        }
+    }
 }
