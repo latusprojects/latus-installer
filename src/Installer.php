@@ -13,7 +13,10 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Jackiedo\DotenvEditor\Facades\DotenvEditor;
 use Latus\Database\Seeders\DatabaseSeeder;
-use Latus\Latus\Repositories\Contracts\UserRepository;
+use Latus\Permissions\Models\Role;
+use Latus\Permissions\Models\User;
+use Latus\Permissions\Services\RoleService;
+use Latus\Permissions\Services\UserService;
 use Symfony\Component\Console\Command\Command;
 
 class Installer
@@ -160,9 +163,9 @@ class Installer
         self::verifyDatabaseDetails($this->database_details);
     }
 
-    protected function insertUser(UserRepository $userRepository): Model
+    protected function insertUser(UserService $userService): Model
     {
-        return $userRepository->create([
+        return $userService->createUser([
             'name' => $this->user_details['username'],
             'email' => $this->user_details['email'],
             'password' => Hash::make($this->user_details['password']),
@@ -177,10 +180,11 @@ class Installer
         Artisan::call('db:seed', ['--class' => DatabaseSeeder::class]);
         $this->printToConsole('Seeded!');
 
-        $this->printToConsole('Inserting specified details...');
-
-        $user = $this->insertUser(app(UserRepository::class));
-
+        $this->printToConsole('Creating user with specified details...');
+        /**
+         * @var User $user
+         */
+        $user = $this->insertUser(new UserService());
         $this->printToConsole('User created!');
 
     }
