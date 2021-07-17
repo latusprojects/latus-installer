@@ -25,5 +25,12 @@
         "Latus\\Installer\\InstallerServiceProvider"
       ]
     }
-  }
+  },
+  "repositories": {
+    "0": {
+      "type": "composer",
+      "url": "https://latusprojects.repo.repman.io"
+    }
+  },
+  "minimum-stability": "dev"
 }
