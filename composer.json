@@ -9,8 +9,6 @@
     }
   ],
   "require": {
-    "php": "^8.0",
-    "laravel/framework": "8.*",
     "jackiedo/dotenv-editor": "^1.2",
     "latusprojects/latus": "dev-develop"
   },
@@ -25,5 +23,12 @@
         "Latus\\Installer\\InstallerServiceProvider"
       ]
     }
-  }
+  },
+  "repositories": {
+    "0": {
+      "type": "composer",
+      "url": "https://latusprojects.repo.repman.io"
+    }
+  },
+  "minimum-stability": "dev"
 }
