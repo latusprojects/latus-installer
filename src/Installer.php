@@ -12,10 +12,9 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Jackiedo\DotenvEditor\Facades\DotenvEditor;
-use Latus\Database\Seeders\DatabaseSeeder;
-use Latus\Permissions\Models\Role;
+use Latus\Installer\Database\DynamicSeeder;
 use Latus\Permissions\Models\User;
-use Latus\Permissions\Services\RoleService;
+use Latus\Permissions\Repositories\Contracts\UserRepository;
 use Latus\Permissions\Services\UserService;
 use Symfony\Component\Console\Command\Command;
 
@@ -191,14 +190,14 @@ class Installer
         $this->printToConsole('Filling database...');
 
         $this->printToConsole('Seeding...');
-        Artisan::call('db:seed', ['--class' => DatabaseSeeder::class]);
+        Artisan::call('db:seed', ['--class' => DynamicSeeder::class]);
         $this->printToConsole('Seeded!');
 
         $this->printToConsole('Creating user with specified details...');
         /**
          * @var User $user
          */
-        $user = $this->insertUser(new UserService());
+        $user = $this->insertUser(new UserService(app()->make(UserRepository::class)));
         $this->printToConsole('User created!');
 
     }
