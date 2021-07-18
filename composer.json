@@ -22,7 +22,7 @@
   "extra": {
     "laravel": {
       "providers": [
-        "Latus\\Installer\\InstallerServiceProvider"
+        "Latus\\Installer\\Providers\\InstallerServiceProvider"
       ]
     }
   },

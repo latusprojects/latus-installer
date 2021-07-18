@@ -1,9 +1,10 @@
 <?php
 
-namespace Latus\Installer;
+namespace Latus\Installer\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Latus\Installer\Console\Commands\InstallCommand;
+use Latus\Installer\Installer;
 
 class InstallerServiceProvider extends ServiceProvider
 {
