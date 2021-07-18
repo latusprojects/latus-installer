@@ -6,7 +6,7 @@ namespace Latus\Installer\Database;
 
 class SeederRepository
 {
-    protected static array $seeders;
+    protected static array $seeders = [];
 
     public function register(array $classes)
     {
