@@ -11,8 +11,10 @@
   "require": {
     "php": "^8.0",
     "laravel/framework": "8.*",
-    "jackiedo/dotenv-editor": "^1.2",
-    "latusprojects/latus": "dev-develop"
+    "jackiedo/dotenv-editor": "^1.2"
+  },
+  "require-dev": {
+    "orchestra/testbench": "v6.19.0"
   },
   "autoload": {
     "psr-4": {
