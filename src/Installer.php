@@ -12,17 +12,27 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Jackiedo\DotenvEditor\Facades\DotenvEditor;
-use Latus\Database\Seeders\DatabaseSeeder;
-use Latus\Permissions\Models\Role;
+use Latus\Installer\Database\DynamicSeeder;
 use Latus\Permissions\Models\User;
-use Latus\Permissions\Services\RoleService;
+use Latus\Permissions\Repositories\Contracts\UserRepository;
 use Latus\Permissions\Services\UserService;
+use Latus\Plugins\Composer\Conductor;
+use Latus\Plugins\Composer\ProxyPackage;
+use Latus\Plugins\Exceptions\ComposerCLIException;
+use Latus\Plugins\Models\ComposerRepository;
+use Latus\Plugins\Services\ComposerRepositoryService;
+use Latus\Plugins\Services\ThemeService;
 use Symfony\Component\Console\Command\Command;
 
 class Installer
 {
 
+    public const DEFAULT_THEME = 'latusprojects/latus-2021-theme';
+    public const DEFAULT_THEME_VERSION = 'dev-develop';
+
     protected \Illuminate\Console\Command|null $command = null;
+    protected ComposerRepositoryService $composerRepositoryService;
+    protected ThemeService $themeService;
 
     public function __construct(
         protected array $database_details,
@@ -30,6 +40,8 @@ class Installer
         protected array $app_details,
     )
     {
+        $this->composerRepositoryService = app(ComposerRepositoryService::class);
+        $this->themeService = app(ThemeService::class);
     }
 
     protected const DATABASE_DETAILS_VALIDATION_RULES = [
@@ -54,6 +66,9 @@ class Installer
         'password_confirmation' => 'required'
     ];
 
+    /**
+     * @throws \Exception
+     */
     public static function createTestMockup()
     {
         $installer = new self([], [
@@ -191,18 +206,57 @@ class Installer
         $this->printToConsole('Filling database...');
 
         $this->printToConsole('Seeding...');
-        Artisan::call('db:seed', ['--class' => DatabaseSeeder::class]);
+        Artisan::call('db:seed', ['--class' => DynamicSeeder::class]);
         $this->printToConsole('Seeded!');
 
         $this->printToConsole('Creating user with specified details...');
         /**
          * @var User $user
          */
-        $user = $this->insertUser(new UserService());
+        $user = $this->insertUser(new UserService(app()->make(UserRepository::class)));
         $this->printToConsole('User created!');
 
     }
 
+    protected function createComposerRepository(): ComposerRepository
+    {
+        return $this->composerRepositoryService->createRepository([
+            'name' => 'latusprojects.repo.repman.io',
+            'url' => 'https://latusprojects.repo.repman.io'
+        ]);
+    }
+
+    /**
+     * @throws ComposerCLIException
+     */
+    protected function createAndInstallDefaultTheme()
+    {
+        $this->printToConsole('Installing default theme "' . self::DEFAULT_THEME . '"...');
+
+        $repository = $this->createComposerRepository();
+
+        $theme = $this->themeService->createTheme([
+            'name' => self::DEFAULT_THEME,
+            'supports' => [],
+            'repository_id' => $repository->id,
+            'target_version' => self::DEFAULT_THEME_VERSION
+        ]);
+
+        $proxyPackage = new ProxyPackage($repository, $theme);
+
+        /**
+         * @var Conductor $conductor
+         */
+        $conductor = app(Conductor::class);
+        $conductor->installOrUpdatePackage($proxyPackage);
+
+        $this->printToConsole('Theme installed!');
+    }
+
+    /**
+     * @throws ComposerCLIException
+     * @throws \Exception
+     */
     public function commenceInstallation()
     {
         $this->tryDetails();
@@ -212,6 +266,8 @@ class Installer
         $this->runMigrations();
 
         $this->fillDatabase();
+
+        $this->createAndInstallDefaultTheme();
 
     }
 

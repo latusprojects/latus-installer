@@ -1,12 +1,17 @@
 <?php
 
-namespace Latus\Installer;
+namespace Latus\Installer\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Latus\Installer\Console\Commands\InstallCommand;
+use Latus\Installer\Database\Seeders\DatabaseSeeder;
+use Latus\Installer\Installer;
+use Latus\Installer\Providers\Traits\RegistersSeeders;
 
 class InstallerServiceProvider extends ServiceProvider
 {
+    use RegistersSeeders;
+
     /**
      * Register services.
      *
@@ -16,6 +21,10 @@ class InstallerServiceProvider extends ServiceProvider
     {
         $this->commands([
             InstallCommand::class,
+        ]);
+
+        $this->registerSeeders([
+            DatabaseSeeder::class,
         ]);
     }
 
