@@ -205,16 +205,16 @@ class Installer
     {
         $this->printToConsole('Filling database...');
 
-        $this->printToConsole('Seeding...');
-        Artisan::call('db:seed', ['--class' => DynamicSeeder::class]);
-        $this->printToConsole('Seeded!');
-
         $this->printToConsole('Creating user with specified details...');
         /**
          * @var User $user
          */
         $user = $this->insertUser(new UserService(app()->make(UserRepository::class)));
         $this->printToConsole('User created!');
+
+        $this->printToConsole('Seeding...');
+        Artisan::call('db:seed', ['--class' => DynamicSeeder::class]);
+        $this->printToConsole('Seeded!');
 
     }
 
