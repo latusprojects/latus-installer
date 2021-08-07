@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Validator;
 use Jackiedo\DotenvEditor\Facades\DotenvEditor;
 use Latus\Installer\Database\DynamicSeeder;
 use Latus\Permissions\Models\User;
-use Latus\Permissions\Repositories\Contracts\UserRepository;
 use Latus\Permissions\Services\UserService;
 use Latus\Plugins\Composer\Conductor;
 use Latus\Plugins\Composer\ProxyPackage;
@@ -206,10 +205,11 @@ class Installer
         $this->printToConsole('Filling database...');
 
         $this->printToConsole('Creating user with specified details...');
+
         /**
          * @var User $user
          */
-        $user = $this->insertUser(new UserService(app()->make(UserRepository::class)));
+        $user = $this->insertUser(app()->make(UserService::class));
         $this->printToConsole('User created!');
 
         $this->printToConsole('Seeding...');
