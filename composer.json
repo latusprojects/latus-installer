@@ -24,13 +24,6 @@
       "Latus\\Installer\\Database\\Seeders\\": "database/seeders/"
     }
   },
-  "extra": {
-    "laravel": {
-      "providers": [
-        "Latus\\Installer\\Providers\\InstallerServiceProvider"
-      ]
-    }
-  },
   "repositories": {
     "0": {
       "type": "composer",
