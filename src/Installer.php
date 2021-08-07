@@ -19,6 +19,7 @@ use Latus\Plugins\Composer\Conductor;
 use Latus\Plugins\Composer\ProxyPackage;
 use Latus\Plugins\Exceptions\ComposerCLIException;
 use Latus\Plugins\Models\ComposerRepository;
+use Latus\Plugins\Models\Theme;
 use Latus\Plugins\Services\ComposerRepositoryService;
 use Latus\Plugins\Services\ThemeService;
 use Symfony\Component\Console\Command\Command;
@@ -239,7 +240,8 @@ class Installer
             'name' => self::DEFAULT_THEME,
             'supports' => [],
             'repository_id' => $repository->id,
-            'target_version' => self::DEFAULT_THEME_VERSION
+            'target_version' => self::DEFAULT_THEME_VERSION,
+            'status' => Theme::STATUS_ACTIVE
         ]);
 
         $proxyPackage = new ProxyPackage($repository, $theme);
