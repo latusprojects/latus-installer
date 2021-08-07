@@ -223,7 +223,8 @@ class Installer
     {
         return $this->composerRepositoryService->createRepository([
             'name' => 'latusprojects.repo.repman.io',
-            'url' => 'https://latusprojects.repo.repman.io'
+            'url' => 'https://latusprojects.repo.repman.io',
+            'status' => ComposerRepository::STATUS_ACTIVATED
         ]);
     }
 
