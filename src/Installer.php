@@ -44,7 +44,7 @@ class Installer
         $this->themeService = app(ThemeService::class);
     }
 
-    protected const DATABASE_DETAILS_VALIDATION_RULES = [
+    public const DATABASE_DETAILS_VALIDATION_RULES = [
         'host' => 'required|string|min:5',
         'username' => 'required|string|min:3|max:16',
         'database' => 'required|string|min:3|max:54',
@@ -54,12 +54,12 @@ class Installer
         'prefix' => 'sometimes|string|max:10',
     ];
 
-    protected const APP_DETAILS_VALIDATION_RULES = [
+    public const APP_DETAILS_VALIDATION_RULES = [
         'name' => 'required|string|min:3|max:255',
         'url' => 'required|url'
     ];
 
-    protected const USER_DETAILS_VALIDATION_RULES = [
+    public const USER_DETAILS_VALIDATION_RULES = [
         'username' => 'required|min:5|max:50',
         'email' => 'required|email',
         'password' => 'required|string|min:8|max:255|confirmed',
@@ -115,7 +115,13 @@ class Installer
         ]);
     }
 
-    protected static function validateValuesWithRules(array $values, array $rules): bool
+    /**
+     * @param array $values
+     * @param array $rules
+     * @return bool
+     * @throws \InvalidArgumentException
+     */
+    public static function validateValuesWithRules(array $values, array $rules): bool
     {
         $validator = Validator::make($values, $rules);
 
