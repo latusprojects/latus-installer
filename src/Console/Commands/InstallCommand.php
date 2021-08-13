@@ -9,6 +9,9 @@ use Latus\Installer\Installer;
 
 class InstallCommand extends Command
 {
+
+    public const DEFAULT_PRESET = 'latus-installer.preset.json';
+
     /**
      * The name and signature of the console command.
      *
