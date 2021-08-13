@@ -115,7 +115,7 @@ class Installer
         ]);
     }
 
-    protected static function validateValuesWithRules(array $values, array $rules): bool
+    public static function validateValuesWithRules(array $values, array $rules): bool
     {
         $validator = Validator::make($values, $rules);
 
