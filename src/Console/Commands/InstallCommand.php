@@ -5,6 +5,9 @@ namespace Latus\Installer\Console\Commands;
 
 
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Support\Facades\File;
+use Latus\Helpers\Paths;
 use Latus\Installer\Installer;
 
 class InstallCommand extends Command
@@ -26,18 +29,34 @@ class InstallCommand extends Command
      */
     protected $description = 'Guided latus installer, also available as web-installer under <your-website>/install';
 
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
+    protected array $loadedPresetDetails = [];
+
+    protected function getPresetDetailsMaybeFail(string $section, array $rules): array|null
     {
-        parent::__construct();
+        if (isset($this->loadedPresetDetails[$section])) {
+            $details = $this->loadedPresetDetails[$section];
+
+            try {
+                Installer::validateValuesWithRules($details, $rules);
+            } catch (\InvalidArgumentException $e) {
+                $this->error('The loaded preset is missing one or more keys in the "' . $section . '" section:');
+                $this->error($e->getMessage());
+                $this->error('Please verify that the preset contains all required keys and try again.');
+
+                exit(1);
+            }
+
+            $this->info('--- Loaded ' . $section . '-details from preset ---');
+
+            return $details;
+        }
+
+        return null;
     }
 
     protected function askDatabaseDetails(): array
     {
+        if ($presetDetails = $this->getPresetDetailsMaybeFail('database', Installer::DATABASE_DETAILS_VALIDATION_RULES)) return $presetDetails;
 
         $details = [
             'driver' => $this->ask('Driver (mysql,postgres,sqlite,sqlsrv)', 'mysql'),
@@ -61,6 +80,7 @@ class InstallCommand extends Command
 
     protected function askUserDetails(): array
     {
+        if ($presetDetails = $this->getPresetDetailsMaybeFail('user', Installer::USER_DETAILS_VALIDATION_RULES)) return $presetDetails;
 
         $details = [
             'username' => $this->ask('Username', 'admin'),
@@ -82,6 +102,8 @@ class InstallCommand extends Command
     protected function askAppDetails(): array
     {
 
+        if ($presetDetails = $this->getPresetDetailsMaybeFail('app', Installer::APP_DETAILS_VALIDATION_RULES)) return $presetDetails;
+
         $details = [
             'name' => $this->ask('Name'),
             'url' => $this->ask('App-URL'),
@@ -98,12 +120,37 @@ class InstallCommand extends Command
     }
 
     /**
+     * @throws FileNotFoundException
+     */
+    protected function loadPreset()
+    {
+        if (!$presetName = $this->option('preset')) {
+            return;
+        }
+
+        if (!File::exists(Paths::basePath($presetName)) && !File::exists($presetName)) {
+            throw new FileNotFoundException('A preset has been specified, but no file with that name or path exists. File: ' . $presetName);
+        }
+
+        $this->loadedPresetDetails = json_decode(
+            File::get(
+                File::exists(Paths::basePath($presetName))
+                    ? Paths::basePath($presetName)
+                    : $presetName
+            ), true);
+
+    }
+
+    /**
      * Execute the console command.
      *
      * @return int
+     * @throws FileNotFoundException
      */
-    public function handle()
+    public function handle(): int
     {
+
+        $this->loadPreset();
 
         $this->info('Welcome! This CLI will guide you through the installation of latus. This won\'t take long, I promise! ');
 
@@ -124,6 +171,7 @@ class InstallCommand extends Command
         } catch (\Exception $e) {
             $this->error($e->getMessage());
         }
+
         return 0;
     }
 }
