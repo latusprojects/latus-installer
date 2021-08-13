@@ -115,6 +115,12 @@ class Installer
         ]);
     }
 
+    /**
+     * @param array $values
+     * @param array $rules
+     * @return bool
+     * @throws \InvalidArgumentException
+     */
     public static function validateValuesWithRules(array $values, array $rules): bool
     {
         $validator = Validator::make($values, $rules);
