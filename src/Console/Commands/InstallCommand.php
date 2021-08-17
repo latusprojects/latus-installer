@@ -20,7 +20,7 @@ class InstallCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'latus:install {--preset=' . self::DEFAULT_PRESET . '}';
+    protected $signature = 'latus:install {--preset=}';
 
     /**
      * The console command description.
