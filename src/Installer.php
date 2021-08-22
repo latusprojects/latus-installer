@@ -16,7 +16,7 @@ use Latus\Installer\Database\DynamicSeeder;
 use Latus\Permissions\Models\User;
 use Latus\Permissions\Services\UserService;
 use Latus\Plugins\Composer\Conductor;
-use Latus\Plugins\Composer\ProxyPackage;
+use Latus\Plugins\Composer\Package;
 use Latus\Plugins\Exceptions\ComposerCLIException;
 use Latus\Plugins\Models\ComposerRepository;
 use Latus\Plugins\Models\Theme;
@@ -252,13 +252,13 @@ class Installer
             'status' => Theme::STATUS_ACTIVE
         ]);
 
-        $proxyPackage = new ProxyPackage($repository, $theme);
+        $package = new Package($repository, $theme);
 
         /**
          * @var Conductor $conductor
          */
         $conductor = app(Conductor::class);
-        $conductor->installOrUpdatePackage($proxyPackage);
+        $conductor->installOrUpdatePackage($package);
 
         $this->printToConsole('Theme installed!');
     }
