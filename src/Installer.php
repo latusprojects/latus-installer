@@ -28,7 +28,7 @@ class Installer
 {
 
     public const DEFAULT_THEME = 'latusprojects/latus-2021-theme';
-    public const DEFAULT_THEME_VERSION = '0.1.1';
+    public const DEFAULT_THEME_VERSION = '0.1.2';
 
     protected \Illuminate\Console\Command|null $command = null;
     protected ComposerRepositoryService $composerRepositoryService;
