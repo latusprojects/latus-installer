@@ -7,8 +7,9 @@ namespace Latus\Installer\Database;
 class SeederRepository
 {
     protected static array $seeders = [];
+    protected static array $prioritisedSeeders = [];
 
-    public function register(array $classes)
+    public function register(array $classes, bool $prioritise = false)
     {
         if (empty(self::$seeders)) {
             self::$seeders = $classes;
@@ -16,14 +17,24 @@ class SeederRepository
         }
 
         foreach ($classes as $class) {
-            if (!in_array($class, self::$seeders)) {
-                self::$seeders[] = $class;
+            if (!in_array($class, self::$prioritisedSeeders) && !(in_array($class, self::$seeders))) {
+                if ($prioritise || str_starts_with($class, 'Latus\Database\Seeders')) {
+                    self::$prioritisedSeeders[] = $class;
+                } else {
+                    self::$seeders[] = $class;
+                }
             }
+
         }
+    }
+
+    public function prioritised(): array
+    {
+        return self::$prioritisedSeeders;
     }
 
     public function all(): array
     {
-        return self::$seeders;
+        return self::$prioritisedSeeders + self::$seeders;
     }
 }
