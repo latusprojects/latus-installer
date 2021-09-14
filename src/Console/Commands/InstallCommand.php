@@ -159,7 +159,7 @@ class InstallCommand extends Command
     protected function fillUpDefaultDatabasePresetDetails(): void
     {
         if (isset($this->loadedPresetDetails['database'])) {
-            $this->loadedPresetDetails = $this->loadedPresetDetails['database'] + [
+            $this->loadedPresetDetails['database'] = $this->loadedPresetDetails['database'] + [
                     'port' => 3306,
                     'driver' => 'mysql',
                     'prefix' => ''
