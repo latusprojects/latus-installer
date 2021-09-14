@@ -139,6 +139,32 @@ class InstallCommand extends Command
                     : $presetName
             ), true);
 
+        $this->fillUpDefaultUserPresetDetails();
+        $this->fillUpDefaultDatabasePresetDetails();
+    }
+
+    /**
+     * If a preset is provided and the key 'user' exists, merge the preset with default user-details that are optional but required for validation
+     */
+    protected function fillUpDefaultUserPresetDetails(): void
+    {
+        if (isset($this->loadedPresetDetails['user']) && isset($this->loadedPresetDetails['user']['password'])) {
+            $this->loadedPresetDetails['user']['password_confirmation'] = $this->loadedPresetDetails['user']['password'];
+        }
+    }
+
+    /**
+     * If a preset is provided and the key 'database' exists, merge the preset with default database-details that are optional but required for validation
+     */
+    protected function fillUpDefaultDatabasePresetDetails(): void
+    {
+        if (isset($this->loadedPresetDetails['database'])) {
+            $this->loadedPresetDetails = $this->loadedPresetDetails['database'] + [
+                    'port' => 3306,
+                    'driver' => 'mysql',
+                    'prefix' => ''
+                ];
+        }
     }
 
     /**
@@ -165,6 +191,14 @@ class InstallCommand extends Command
 
         $installer = new Installer($database_details, $user_details, $app_details);
         $installer->setCli($this);
+
+        if (
+            isset($this->loadedPresetDetails['theme']) &&
+            isset($this->loadedPresetDetails['theme']['name']) &&
+            isset($this->loadedPresetDetails['theme']['version'])
+        ) {
+            $installer->setTheme($this->loadedPresetDetails['theme']['name'], $this->loadedPresetDetails['theme']['version']);
+        }
 
         try {
             $installer->commenceInstallation();
