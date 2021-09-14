@@ -33,6 +33,8 @@ class Installer
     protected \Illuminate\Console\Command|null $command = null;
     protected ComposerRepositoryService $composerRepositoryService;
     protected ThemeService $themeService;
+    protected string $theme;
+    protected string $themeVersion;
 
     public function __construct(
         protected array $database_details,
@@ -240,15 +242,15 @@ class Installer
      */
     protected function createAndInstallDefaultTheme()
     {
-        $this->printToConsole('Installing default theme "' . self::DEFAULT_THEME . '"...');
+        $this->printToConsole('Installing default theme "' . $this->getTheme() . '"...');
 
         $repository = $this->createComposerRepository();
 
         $theme = $this->themeService->createTheme([
-            'name' => self::DEFAULT_THEME,
+            'name' => $this->getTheme(),
             'supports' => [],
             'repository_id' => $repository->id,
-            'target_version' => self::DEFAULT_THEME_VERSION,
+            'target_version' => $this->getThemeVersion(),
             'status' => Theme::STATUS_ACTIVE
         ]);
 
@@ -295,5 +297,25 @@ class Installer
     public function setCli(\Illuminate\Console\Command $command)
     {
         $this->command = $command;
+    }
+
+    public function getTheme(): string
+    {
+        return isset($this->{'theme'})
+            ? $this->theme
+            : self::DEFAULT_THEME;
+    }
+
+    public function getThemeVersion(): string
+    {
+        return isset($this->{'themeVersion'})
+            ? $this->themeVersion
+            : self::DEFAULT_THEME_VERSION;
+    }
+
+    public function setTheme(string $theme, string $version): void
+    {
+        $this->theme = $theme;
+        $this->themeVersion = $version;
     }
 }
