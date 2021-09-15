@@ -193,11 +193,15 @@ class InstallCommand extends Command
         $installer->setCli($this);
 
         if (
-            isset($this->loadedPresetDetails['theme']) &&
-            isset($this->loadedPresetDetails['theme']['name']) &&
-            isset($this->loadedPresetDetails['theme']['version'])
+            isset($this->loadedPresetDetails['themes']) &&
+            is_array($this->loadedPresetDetails['themes'])
         ) {
-            $installer->setTheme($this->loadedPresetDetails['theme']['name'], $this->loadedPresetDetails['theme']['version']);
+            foreach ($this->loadedPresetDetails['themes'] as $theme) {
+                if (isset($theme['name']) && isset($theme['version'])) {
+                    $activeForModules = $theme['active'] ?? [];
+                    $installer->addTheme($theme['name'], $theme['version'], $activeForModules);
+                }
+            }
         }
 
         try {
