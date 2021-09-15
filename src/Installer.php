@@ -22,6 +22,8 @@ use Latus\Plugins\Models\ComposerRepository;
 use Latus\Plugins\Models\Theme;
 use Latus\Plugins\Services\ComposerRepositoryService;
 use Latus\Plugins\Services\ThemeService;
+use Latus\Settings\Models\Setting;
+use Latus\Settings\Services\SettingService;
 use Symfony\Component\Console\Command\Command;
 
 class Installer
@@ -33,8 +35,9 @@ class Installer
     protected \Illuminate\Console\Command|null $command = null;
     protected ComposerRepositoryService $composerRepositoryService;
     protected ThemeService $themeService;
-    protected string $theme;
-    protected string $themeVersion;
+    protected SettingService $settingService;
+    protected array $themes = [];
+    protected array $activeModules = [];
 
     public function __construct(
         protected array $database_details,
@@ -44,6 +47,7 @@ class Installer
     {
         $this->composerRepositoryService = app(ComposerRepositoryService::class);
         $this->themeService = app(ThemeService::class);
+        $this->settingService = app(SettingService::class);
     }
 
     public const DATABASE_DETAILS_VALIDATION_RULES = [
@@ -240,29 +244,40 @@ class Installer
     /**
      * @throws ComposerCLIException
      */
-    protected function createAndInstallDefaultTheme()
+    protected function createAndInstallThemes()
     {
-        $this->printToConsole('Installing default theme "' . $this->getTheme() . '"...');
+        $this->printToConsole('Installing themes...');
 
         $repository = $this->createComposerRepository();
 
-        $theme = $this->themeService->createTheme([
-            'name' => $this->getTheme(),
-            'supports' => [],
-            'repository_id' => $repository->id,
-            'target_version' => $this->getThemeVersion(),
-            'status' => Theme::STATUS_ACTIVE
-        ]);
+        foreach ($this->themes as $themeName => $themeVersion) {
+            $this->printToConsole('Installing theme ' . $themeName . '...');
 
-        $package = new Package($repository, $theme);
+            $theme = $this->themeService->createTheme([
+                'name' => $themeName,
+                'supports' => [],
+                'repository_id' => $repository->id,
+                'target_version' => $themeVersion,
+                'status' => Theme::STATUS_ACTIVE
+            ]);
+
+            $package = new Package($repository, $theme);
+
+            /**
+             * @var Conductor $conductor
+             */
+            $conductor = app(Conductor::class);
+            $conductor->installOrUpdatePackage($package);
+
+            $this->printToConsole('Theme ' . $themeName . ' installed!');
+        }
 
         /**
-         * @var Conductor $conductor
+         * @var Setting $setting
          */
-        $conductor = app(Conductor::class);
-        $conductor->installOrUpdatePackage($package);
+        $setting = $this->settingService->findByKey('active_modules');
+        $this->settingService->setSettingValue($setting, json_encode($this->activeModules));
 
-        $this->printToConsole('Theme installed!');
     }
 
     /**
@@ -279,7 +294,7 @@ class Installer
 
         $this->fillDatabase();
 
-        $this->createAndInstallDefaultTheme();
+        $this->createAndInstallThemes();
 
     }
 
@@ -299,23 +314,23 @@ class Installer
         $this->command = $command;
     }
 
-    public function getTheme(): string
+
+    public function getThemes(): array
     {
-        return isset($this->{'theme'})
-            ? $this->theme
-            : self::DEFAULT_THEME;
+        return $this->themes;
     }
 
-    public function getThemeVersion(): string
+    protected function getActiveModules(): array
     {
-        return isset($this->{'themeVersion'})
-            ? $this->themeVersion
-            : self::DEFAULT_THEME_VERSION;
+        return $this->activeModules;
     }
 
-    public function setTheme(string $theme, string $version): void
+    public function addTheme(string $theme, string $version, array $activeForModules = []): void
     {
-        $this->theme = $theme;
-        $this->themeVersion = $version;
+        $this->themes[$theme] = $version;
+
+        foreach ($activeForModules as $moduleContract => $moduleClass) {
+            $this->activeModules[$moduleContract] = $moduleClass;
+        }
     }
 }
