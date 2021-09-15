@@ -250,7 +250,7 @@ class Installer
 
         $repository = $this->createComposerRepository();
 
-        foreach ($this->themes as $themeName => $themeVersion) {
+        foreach ($this->getThemes() as $themeName => $themeVersion) {
             $this->printToConsole('Installing theme ' . $themeName . '...');
 
             $theme = $this->themeService->createTheme([
@@ -276,7 +276,7 @@ class Installer
          * @var Setting $setting
          */
         $setting = $this->settingService->findByKey('active_modules');
-        $this->settingService->setSettingValue($setting, json_encode($this->activeModules));
+        $this->settingService->setSettingValue($setting, json_encode($this->getActiveModules()));
 
     }
 
