@@ -23,6 +23,13 @@ class RolePermissionSeeder extends Seeder
         'plugin.*',
         'repository.*',
         'theme.*',
+        'setting.*',
+        'nav.*',
+        'content.*',
+        'content.setting.*',
+        'content.page.*',
+        'content.post.*',
+        'content.event.*',
     ];
 
     public function __construct(
