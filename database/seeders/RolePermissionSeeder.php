@@ -12,6 +12,7 @@ class RolePermissionSeeder extends Seeder
 {
 
     protected const ADMIN_PERMISSIONS = [
+        'module.admin',
         'dashboard.*',
         'user.*',
         'user.role.*',
@@ -22,10 +23,17 @@ class RolePermissionSeeder extends Seeder
         'plugin.*',
         'repository.*',
         'theme.*',
+        'setting.*',
+        'nav.*',
+        'content.*',
+        'content.setting.*',
+        'content.page.*',
+        'content.post.*',
+        'content.event.*',
     ];
 
     public function __construct(
-        protected RoleService $roleService,
+        protected RoleService       $roleService,
         protected PermissionService $permissionService,
     )
     {

@@ -31,6 +31,8 @@ class InstallCommand extends Command
 
     protected array $loadedPresetDetails = [];
 
+    protected Installer $installer;
+
     protected function getPresetDetailsMaybeFail(string $section, array $rules): array|null
     {
         if (isset($this->loadedPresetDetails[$section])) {
@@ -168,6 +170,21 @@ class InstallCommand extends Command
     }
 
     /**
+     *
+     */
+    protected function addThemesFromPresetToInstaller()
+    {
+        if (isset($this->loadedPresetDetails['themes']) && is_array($this->loadedPresetDetails['themes'])) {
+            foreach ($this->loadedPresetDetails['themes'] as $theme) {
+                if (isset($theme['name']) && isset($theme['version'])) {
+                    $activeForModules = $theme['active'] ?? [];
+                    $this->installer->addTheme($theme['name'], $theme['version'], $activeForModules);
+                }
+            }
+        }
+    }
+
+    /**
      * Execute the console command.
      *
      * @return int
@@ -192,17 +209,9 @@ class InstallCommand extends Command
         $installer = new Installer($database_details, $user_details, $app_details);
         $installer->setCli($this);
 
-        if (
-            isset($this->loadedPresetDetails['themes']) &&
-            is_array($this->loadedPresetDetails['themes'])
-        ) {
-            foreach ($this->loadedPresetDetails['themes'] as $theme) {
-                if (isset($theme['name']) && isset($theme['version'])) {
-                    $activeForModules = $theme['active'] ?? [];
-                    $installer->addTheme($theme['name'], $theme['version'], $activeForModules);
-                }
-            }
-        }
+        $this->installer = $installer;
+
+        $this->addThemesFromPresetToInstaller();
 
         try {
             $installer->commenceInstallation();
