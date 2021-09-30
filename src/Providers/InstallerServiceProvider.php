@@ -2,13 +2,13 @@
 
 namespace Latus\Installer\Providers;
 
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 use Latus\Installer\Console\Commands\InstallCommand;
 use Latus\Installer\Database\Seeders\DatabaseSeeder;
-use Latus\Installer\Installer;
 use Latus\Installer\Providers\Traits\RegistersSeeders;
 
-class InstallerServiceProvider extends ServiceProvider
+class InstallerServiceProvider extends LaravelServiceProvider
 {
     use RegistersSeeders;
 
@@ -26,6 +26,17 @@ class InstallerServiceProvider extends ServiceProvider
         $this->registerSeeders([
             DatabaseSeeder::class,
         ]);
+
+        $this->app->register(EventServiceProvider::class);
+
+        $this->app->register(ViewServiceProvider::class);
+    }
+
+    protected function copyInstallerAssets()
+    {
+        if (!File::exists(public_path('assets/vendor/latus-installer'))) {
+            File::copyDirectory(__DIR__ . '/../../resources/assets/dist', public_path('assets/vendor/latus-installer'));
+        }
     }
 
     /**
@@ -35,8 +46,11 @@ class InstallerServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        if (!Installer::isInstalled()) {
-            //$this->loadRoutesFrom(__DIR__ . '/../routes');
+        if (defined('LATUS_INSTALLER')) {
+            $this->app->booted(function () {
+                $this->copyInstallerAssets();
+                require __DIR__ . '/../../routes/web.php';
+            });
         }
     }
 }
