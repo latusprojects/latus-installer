@@ -72,23 +72,6 @@ class Installer
         'password_confirmation' => 'required'
     ];
 
-    /**
-     * @throws \Exception
-     */
-    public static function createTestMockup()
-    {
-        $installer = new self([], [
-            'name' => 'Max Mustermann',
-            'email' => 'test@unit.test',
-            'password' => Hash::make('password'),
-        ], []);
-
-        $installer->runMigrations();
-
-        $installer->fillDatabase();
-
-    }
-
     public static function isInstalled(): bool
     {
         return stream_resolve_include_path(base_path('.installed')) !== false;
