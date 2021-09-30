@@ -1,0 +1,1 @@
+@extends('latus-installer::layout')
