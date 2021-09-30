@@ -72,22 +72,6 @@ class Installer
         'password_confirmation' => 'required'
     ];
 
-    public static function isInstalled(): bool
-    {
-        return stream_resolve_include_path(base_path('.installed')) !== false;
-    }
-
-    public static function setIsInstalled(bool $value)
-    {
-        if ($value) {
-            File::put(base_path('.installed'), '');
-            return;
-        }
-        if (self::isInstalled()) {
-            File::delete(base_path('.installed'));
-        }
-    }
-
     protected static function setInstallerDatabaseConfig(array $values)
     {
         Config::set('database.connections.latus_installer', [
