@@ -99,7 +99,7 @@ abstract class Installer
     protected function provideUserDetails(array $details)
     {
         UserDetailsProvided::dispatch(['details' => [
-            'username' => $details['username'],
+            'name' => $details['name'],
             'email' => $details['email'],
             'password' => $details['password'],
         ]]);

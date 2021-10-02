@@ -9,7 +9,7 @@ class SubmitUserDetailsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'username' => 'required|min:5|max:50',
+            'name' => 'required|min:5|max:50',
             'email' => 'required|email',
             'password' => 'required|string|min:8|max:255|confirmed',
             'password_confirmation' => 'required'

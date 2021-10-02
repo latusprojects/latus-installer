@@ -31,7 +31,7 @@ class InstallCommand extends Command
             'url' => 'required|url'
         ],
         'user' => [
-            'username' => 'required|min:5|max:50',
+            'name' => 'required|min:5|max:50',
             'email' => 'required|email',
             'password' => 'required|string|min:8|max:255|confirmed',
             'password_confirmation' => 'required'
@@ -53,7 +53,7 @@ class InstallCommand extends Command
             'url' => 'required|url'
         ],
         'user' => [
-            'username' => 'required|min:5|max:50',
+            'name' => 'required|min:5|max:50',
             'email' => 'required|email',
             'password' => 'required|string|min:8|max:255'
         ]
@@ -159,7 +159,7 @@ class InstallCommand extends Command
         if ($presetDetails = $this->getPresetDetailsMaybeFail('user')) return $presetDetails;
 
         $details = [
-            'username' => $this->ask('Username', 'admin'),
+            'name' => $this->ask('Username', 'admin'),
             'email' => $this->ask('Email'),
             'password' => $this->secret('Password'),
             'password_confirmation' => $this->secret('Confirm Password'),
