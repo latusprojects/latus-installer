@@ -20,9 +20,9 @@ use Latus\Installer\Listeners\UpdateActiveModules;
 use Latus\Installer\Listeners\UpdateAppDetailsInEnvFile;
 use Latus\Installer\Listeners\UpdateDatabaseDetailsInEnvFile;
 
-class EventServiceProvider extends \Illuminate\Events\EventServiceProvider
+class EventServiceProvider extends \Illuminate\Foundation\Support\Providers\EventServiceProvider
 {
-    protected array $listeners = [
+    protected $listen = [
         UserDetailsProvided::class => [
             CreateDefaultUser::class
         ],
