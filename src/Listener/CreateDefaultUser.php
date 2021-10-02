@@ -14,8 +14,8 @@ class CreateDefaultUser
      */
     public function handle(UserDetailsProvided $event, UserService $userService)
     {
-        $user = $userService->createUser($event->attributes);
+        $user = $userService->createUser($event->details);
 
-        DefaultUserCreated::dispatch($user);
+        DefaultUserCreated::dispatch(['user' => $user]);
     }
 }
