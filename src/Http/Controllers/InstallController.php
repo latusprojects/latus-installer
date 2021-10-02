@@ -8,8 +8,11 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Cache;
 use Latus\Installer\Http\Requests\CheckDatabaseDetailsRequest;
+use Latus\Installer\Http\Requests\SubmitAppDetailsRequest;
+use Latus\Installer\Http\Requests\SubmitDatabaseDetailsRequest;
+use Latus\Installer\Http\Requests\SubmitUserDetailsRequest;
+use Latus\Installer\Repositories\WebInstallerCacheRepository;
 use Latus\Installer\WebInstaller;
 
 class InstallController extends Controller
@@ -30,10 +33,22 @@ class InstallController extends Controller
         self::STEP_COMPLETE => 4,
     ];
 
+    protected WebInstallerCacheRepository $cacheRepository;
+
     public function __construct(
         protected WebInstaller $installer
     )
     {
+        $this->installer->build();
+    }
+
+    protected function getCacheRepository(): WebInstallerCacheRepository
+    {
+        if (!isset($this->{'cacheRepository'})) {
+            $this->cacheRepository = app(WebInstallerCacheRepository::class);
+        }
+
+        return $this->cacheRepository;
     }
 
     public function checkDatabaseDetails(CheckDatabaseDetailsRequest $request): JsonResponse
@@ -49,13 +64,13 @@ class InstallController extends Controller
 
     public function showInstall(string|null $step): View
     {
-        $this->ensureCacheHasKey();
+        $this->getCacheRepository()->ensureCacheHasKey();
 
         if ($step === null || !$this->isValidStep($step)) {
-            redirect('/install/' . $this->getCurrentStep());
+            $this->redirectToCurrentStep();
         }
 
-        return \view('latus-installer::steps.' . $step)->with(['data' => $this->getStepData($step)]);
+        return \view('latus-installer::steps.' . $step)->with(['data' => $this->getCacheRepository()->getStepData($step)]);
     }
 
     protected function isValidStep(string $step): bool
@@ -65,25 +80,64 @@ class InstallController extends Controller
 
     protected function getCurrentStepIndex(): int
     {
-        return self::$stepIndexes[Cache::get('latus-installer')['atStep']];
+        return self::$stepIndexes[$this->getCacheRepository()->getCurrentStep()];
     }
 
-    protected function getCurrentStep(): string
+    public function submitDatabaseDetails(SubmitDatabaseDetailsRequest $request)
     {
-        return Cache::get('latus-installer')['atStep'];
+        $input = $request->validated();
+        $this->getCacheRepository()->putStepDetails('database', $input);
     }
 
-    protected function getStepData(string $step): array
+    public function submitAppDetails(SubmitAppDetailsRequest $request)
     {
-        $cache = Cache::get('latus-installer');
-        return $cache['steps'][$step] ?? [];
+        $input = $request->validated();
+        $this->getCacheRepository()->putStepDetails('app', $input);
     }
 
-    protected function ensureCacheHasKey()
+    public function submitUserDetails(SubmitUserDetailsRequest $request)
     {
-        Cache::get('latus-installer') ?? Cache::put('latus-installer', ['atStep' => 'start', 'steps' => [
-            'database' => ['host' => 'localhost', 'driver' => 'mysql'],
-            'app' => ['url' => 'https://']
-        ]]);
+        $input = $request->validated();
+        $this->getCacheRepository()->putStepDetails('user', $input);
+    }
+
+    protected function redirectToCurrentStep()
+    {
+        redirect('/install/' . $this->getCacheRepository()->getCurrentStep());
+    }
+
+    public function finishInstall(): JsonResponse
+    {
+        if (!$this->isValidStep(self::STEP_COMPLETE)) {
+            return response('Conflict', 409)->json([
+                'message' => 'not all steps finished'
+            ]);
+        }
+
+        try {
+            $this->installer->prepareDatabase();
+        } catch (\Exception) {
+            return response('Internal Server Error', 500)->json([
+                'message' => 'could not run seeders or migrations'
+            ]);
+        }
+
+        $this->provideDetails();
+
+        $this->installer->installComposerPackages();
+
+        $this->installer->destroy();
+
+        return response()->json([
+            'message' => 'install finished'
+        ]);
+    }
+
+
+    protected function provideDetails()
+    {
+        $this->installer->provideDatabaseDetails($this->getCacheRepository()->getStepData('database'));
+        $this->installer->provideAppDetails($this->getCacheRepository()->getStepData('app'));
+        $this->installer->provideUserDetails($this->getCacheRepository()->getStepData('user'));
     }
 }
