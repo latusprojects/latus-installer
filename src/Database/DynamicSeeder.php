@@ -6,6 +6,7 @@ namespace Latus\Installer\Database;
 
 use Illuminate\Database\Seeder;
 use Latus\Installer\Database\Seeders\RolePermissionSeeder;
+use Latus\Installer\Database\Seeders\RoleSeeder;
 
 class DynamicSeeder extends Seeder
 {
@@ -20,6 +21,7 @@ class DynamicSeeder extends Seeder
             $this->call($seeder);
         }
 
+        $this->call(RoleSeeder::class);
         $this->call(RolePermissionSeeder::class);
     }
 }
