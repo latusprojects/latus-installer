@@ -22,8 +22,8 @@ class InstallCommand extends Command
             'username' => 'required|string|min:3|max:16',
             'database' => 'required|string|min:3|max:54',
             'password' => 'required|string|min:6|max:32',
-            'port' => 'required|integer|min:0|max:65535',
-            'driver' => 'required|in:mysql,postgres,sqlite,sqlsrv',
+            'port' => 'sometimes|integer|min:0|max:65535',
+            'driver' => 'sometimes|in:mysql,postgres,sqlite,sqlsrv',
             'prefix' => 'sometimes|string|max:10',
         ],
         'app' => [
@@ -44,8 +44,8 @@ class InstallCommand extends Command
             'username' => 'required|string|min:3|max:16',
             'database' => 'required|string|min:3|max:54',
             'password' => 'required|string|min:6|max:32',
-            'port' => 'required|integer|min:0|max:65535',
-            'driver' => 'required|in:mysql,postgres,sqlite,sqlsrv',
+            'port' => 'sometimes|integer|min:0|max:65535',
+            'driver' => 'sometimes|in:mysql,postgres,sqlite,sqlsrv',
             'prefix' => 'sometimes|string|max:10',
         ],
         'app' => [
@@ -55,7 +55,7 @@ class InstallCommand extends Command
         'user' => [
             'username' => 'required|min:5|max:50',
             'email' => 'required|email',
-            'password' => 'required|string|min:8|max:255|confirmed'
+            'password' => 'required|string|min:8|max:255'
         ]
     ];
 
