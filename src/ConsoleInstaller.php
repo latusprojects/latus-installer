@@ -2,7 +2,14 @@
 
 namespace Latus\Installer;
 
-class ConsoleInstaller
-{
+use Illuminate\Console\Command;
 
+class ConsoleInstaller extends Installer
+{
+    protected Command $cli;
+
+    public function setCli(Command $cli)
+    {
+        $this->cli = $cli;
+    }
 }
