@@ -2,6 +2,7 @@
 
 namespace Latus\Installer\Providers;
 
+use Latus\Installer\Events\ActiveModulesProvided;
 use Latus\Installer\Events\AppDetailsProvided;
 use Latus\Installer\Events\DatabaseDetailsProvided;
 use Latus\Installer\Events\DefaultUserCreated;
@@ -15,6 +16,7 @@ use Latus\Installer\Listeners\InstallComposerRepository;
 use Latus\Installer\Listeners\InstallPlugin;
 use Latus\Installer\Listeners\InstallTheme;
 use Latus\Installer\Listeners\SetTemporaryDatabaseConfig;
+use Latus\Installer\Listeners\UpdateActiveModules;
 use Latus\Installer\Listeners\UpdateAppDetailsInEnvFile;
 use Latus\Installer\Listeners\UpdateDatabaseDetailsInEnvFile;
 
@@ -42,6 +44,9 @@ class EventServiceProvider extends \Illuminate\Events\EventServiceProvider
         ],
         DefaultUserCreated::class => [
             AssignRoleToDefaultUser::class
+        ],
+        ActiveModulesProvided::class => [
+            UpdateActiveModules::class
         ]
     ];
 }
