@@ -8,7 +8,6 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
-use Latus\Installer\Http\Requests\CheckDatabaseDetailsRequest;
 use Latus\Installer\Http\Requests\SubmitAppDetailsRequest;
 use Latus\Installer\Http\Requests\SubmitDatabaseDetailsRequest;
 use Latus\Installer\Http\Requests\SubmitUserDetailsRequest;
@@ -39,7 +38,6 @@ class InstallController extends Controller
         protected WebInstaller $installer
     )
     {
-        $this->installer->build();
     }
 
     protected function getCacheRepository(): WebInstallerCacheRepository
@@ -49,17 +47,6 @@ class InstallController extends Controller
         }
 
         return $this->cacheRepository;
-    }
-
-    public function checkDatabaseDetails(CheckDatabaseDetailsRequest $request): JsonResponse
-    {
-        return $this->installer->attemptConnectionWithDetails($request->validated())
-            ? response()->json([
-                'message' => 'connection successful'
-            ])
-            : response('Not Found', 404)->json([
-                'message' => 'connection using provided details failed'
-            ]);
     }
 
     public function showInstall(string|null $step): View
@@ -83,22 +70,41 @@ class InstallController extends Controller
         return self::$stepIndexes[$this->getCacheRepository()->getCurrentStep()];
     }
 
-    public function submitDatabaseDetails(SubmitDatabaseDetailsRequest $request)
+    public function submitDatabaseDetails(SubmitDatabaseDetailsRequest $request): JsonResponse
     {
         $input = $request->validated();
+
+        if (!$this->installer->attemptConnectionWithDetails($request->validated())) {
+            return response('Not Found', 404)->json([
+                'message' => 'database-connection could not be established using the provided details',
+            ]);
+        }
+
         $this->getCacheRepository()->putStepDetails('database', $input);
+
+        return response()->json([
+            'message' => 'database-details set'
+        ]);
     }
 
-    public function submitAppDetails(SubmitAppDetailsRequest $request)
+    public function submitAppDetails(SubmitAppDetailsRequest $request): JsonResponse
     {
         $input = $request->validated();
         $this->getCacheRepository()->putStepDetails('app', $input);
+
+        return response()->json([
+            'message' => 'app-details set'
+        ]);
     }
 
-    public function submitUserDetails(SubmitUserDetailsRequest $request)
+    public function submitUserDetails(SubmitUserDetailsRequest $request): JsonResponse
     {
         $input = $request->validated();
         $this->getCacheRepository()->putStepDetails('user', $input);
+
+        return response()->json([
+            'message' => 'user-details set'
+        ]);
     }
 
     protected function redirectToCurrentStep()
@@ -114,30 +120,24 @@ class InstallController extends Controller
             ]);
         }
 
+        $this->installer->build();
+
         try {
-            $this->installer->prepareDatabase();
-        } catch (\Exception) {
+            $this->installer->apply(
+                $this->getCacheRepository()->getStepData('database'),
+                $this->getCacheRepository()->getStepData('app'),
+                $this->getCacheRepository()->getStepData('user')
+            );
+        } catch (\Exception $exception) {
             return response('Internal Server Error', 500)->json([
-                'message' => 'could not run seeders or migrations'
+                'message' => $exception->getMessage()
             ]);
         }
-
-        $this->provideDetails();
-
-        $this->installer->installComposerPackages();
 
         $this->installer->destroy();
 
         return response()->json([
             'message' => 'install finished'
         ]);
-    }
-
-
-    protected function provideDetails()
-    {
-        $this->installer->provideDatabaseDetails($this->getCacheRepository()->getStepData('database'));
-        $this->installer->provideAppDetails($this->getCacheRepository()->getStepData('app'));
-        $this->installer->provideUserDetails($this->getCacheRepository()->getStepData('user'));
     }
 }
