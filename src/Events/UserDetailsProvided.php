@@ -9,7 +9,7 @@ class UserDetailsProvided
     use Dispatchable;
 
     public function __construct(
-        public array $attributes
+        public array $details
     )
     {
     }

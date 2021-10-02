@@ -2,8 +2,12 @@
 
 namespace Latus\Installer\Events;
 
+use Illuminate\Foundation\Events\Dispatchable;
+
 class DatabaseDetailsProvided
 {
+    use Dispatchable;
+
     public const VALIDATION_RULES = [
         'host' => 'required|string|min:5',
         'username' => 'required|string|min:3|max:16',
@@ -15,7 +19,7 @@ class DatabaseDetailsProvided
     ];
 
     public function __construct(
-        protected array $details
+        public array $details
     )
     {
     }
