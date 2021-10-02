@@ -14,7 +14,7 @@ class AppDetailsProvided
     ];
 
     public function __construct(
-        public array $attributes
+        public array $details
     )
     {
     }

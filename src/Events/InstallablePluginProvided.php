@@ -4,12 +4,12 @@ namespace Latus\Installer\Events;
 
 use Illuminate\Foundation\Events\Dispatchable;
 
-class UserDetailsProvided
+class InstallablePluginProvided
 {
     use Dispatchable;
 
     public function __construct(
-        public array $details
+        public array $pluginData
     )
     {
     }
