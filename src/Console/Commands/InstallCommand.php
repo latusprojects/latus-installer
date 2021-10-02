@@ -7,13 +7,57 @@ namespace Latus\Installer\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
 use Latus\Helpers\Paths;
-use Latus\Installer\Installer;
+use Latus\Installer\ConsoleInstaller;
 
 class InstallCommand extends Command
 {
 
     public const DEFAULT_PRESET = 'latus-installer.preset.json';
+
+    protected static array $inputValidationRules = [
+        'database' => [
+            'host' => 'required|string|min:5',
+            'username' => 'required|string|min:3|max:16',
+            'database' => 'required|string|min:3|max:54',
+            'password' => 'required|string|min:6|max:32',
+            'port' => 'required|integer|min:0|max:65535',
+            'driver' => 'required|in:mysql,postgres,sqlite,sqlsrv',
+            'prefix' => 'sometimes|string|max:10',
+        ],
+        'app' => [
+            'name' => 'required|string|min:3|max:255',
+            'url' => 'required|url'
+        ],
+        'user' => [
+            'username' => 'required|min:5|max:50',
+            'email' => 'required|email',
+            'password' => 'required|string|min:8|max:255|confirmed',
+            'password_confirmation' => 'required'
+        ]
+    ];
+
+    protected static array $presetValidationRules = [
+        'database' => [
+            'host' => 'required|string|min:5',
+            'username' => 'required|string|min:3|max:16',
+            'database' => 'required|string|min:3|max:54',
+            'password' => 'required|string|min:6|max:32',
+            'port' => 'required|integer|min:0|max:65535',
+            'driver' => 'required|in:mysql,postgres,sqlite,sqlsrv',
+            'prefix' => 'sometimes|string|max:10',
+        ],
+        'app' => [
+            'name' => 'required|string|min:3|max:255',
+            'url' => 'required|url'
+        ],
+        'user' => [
+            'username' => 'required|min:5|max:50',
+            'email' => 'required|email',
+            'password' => 'required|string|min:8|max:255|confirmed'
+        ]
+    ];
 
     /**
      * The name and signature of the console command.
@@ -30,16 +74,38 @@ class InstallCommand extends Command
     protected $description = 'Guided latus installer, also available as web-installer under <your-website>/install';
 
     protected array $loadedPresetDetails = [];
+    protected array $databaseDetails = [];
+    protected array $appDetails = [];
+    protected array $userDetails = [];
 
-    protected Installer $installer;
+    public function __construct(
+        protected ConsoleInstaller $installer,
+    )
+    {
+        parent::__construct();
+    }
 
-    protected function getPresetDetailsMaybeFail(string $section, array $rules): array|null
+    /**
+     * @param array $values
+     * @param array $rules
+     * @throws \InvalidArgumentException
+     */
+    protected function validateValuesWithRules(array $values, array $rules)
+    {
+        $validator = Validator::make($values, $rules);
+
+        if ($validator->fails()) {
+            throw new \InvalidArgumentException($validator->errors()->first());
+        }
+    }
+
+    protected function getPresetDetailsMaybeFail(string $section, array $rules = null): array|null
     {
         if (isset($this->loadedPresetDetails[$section])) {
             $details = $this->loadedPresetDetails[$section];
 
             try {
-                Installer::validateValuesWithRules($details, $rules);
+                $this->validateValuesWithRules($details, $rules ?? self::$presetValidationRules[$section]);
             } catch (\InvalidArgumentException $e) {
                 $this->error('The loaded preset is missing one or more keys in the "' . $section . '" section:');
                 $this->error($e->getMessage());
@@ -58,22 +124,30 @@ class InstallCommand extends Command
 
     protected function askDatabaseDetails(): array
     {
-        if ($presetDetails = $this->getPresetDetailsMaybeFail('database', Installer::DATABASE_DETAILS_VALIDATION_RULES)) return $presetDetails;
+        $details = [];
+        if ($presetDetails = $this->getPresetDetailsMaybeFail('database')) {
+            $details = $presetDetails;
+        } else {
+            $details = [
+                'driver' => $this->ask('Driver (mysql,postgres,sqlite,sqlsrv)', 'mysql'),
+                'host' => $this->ask('Host', 'localhost'),
+                'username' => $this->ask('Username'),
+                'database' => $this->ask('Database'),
+                'password' => $this->ask('Password'),
+                'port' => $this->ask('Port', 3306),
+                'prefix' => $this->ask('Prefix', ''),
+            ];
 
-        $details = [
-            'driver' => $this->ask('Driver (mysql,postgres,sqlite,sqlsrv)', 'mysql'),
-            'host' => $this->ask('Host', 'localhost'),
-            'username' => $this->ask('Username'),
-            'database' => $this->ask('Database'),
-            'password' => $this->ask('Password'),
-            'port' => $this->ask('Port', 3306),
-            'prefix' => $this->ask('Prefix', ''),
-        ];
+            try {
+                $this->validateValuesWithRules($details, self::$inputValidationRules['database']);
+            } catch (\InvalidArgumentException $e) {
+                $this->error($e->getMessage());
+                $this->askDatabaseDetails();
+            }
+        }
 
-        try {
-            Installer::verifyDatabaseDetails($details);
-        } catch (\InvalidArgumentException $e) {
-            $this->error($e->getMessage());
+        if (!$this->installer->attemptConnectionWithDetails($details)) {
+            $this->error('Database connection could not be established using the provided details');
             $this->askDatabaseDetails();
         }
 
@@ -82,7 +156,7 @@ class InstallCommand extends Command
 
     protected function askUserDetails(): array
     {
-        if ($presetDetails = $this->getPresetDetailsMaybeFail('user', Installer::USER_DETAILS_VALIDATION_RULES)) return $presetDetails;
+        if ($presetDetails = $this->getPresetDetailsMaybeFail('user')) return $presetDetails;
 
         $details = [
             'username' => $this->ask('Username', 'admin'),
@@ -92,7 +166,7 @@ class InstallCommand extends Command
         ];
 
         try {
-            Installer::tryUserDetails($details);
+            $this->validateValuesWithRules($details, self::$inputValidationRules['user']);
         } catch (\InvalidArgumentException $e) {
             $this->error($e->getMessage());
             $this->askUserDetails();
@@ -104,15 +178,15 @@ class InstallCommand extends Command
     protected function askAppDetails(): array
     {
 
-        if ($presetDetails = $this->getPresetDetailsMaybeFail('app', Installer::APP_DETAILS_VALIDATION_RULES)) return $presetDetails;
+        if ($presetDetails = $this->getPresetDetailsMaybeFail('app')) return $presetDetails;
 
         $details = [
             'name' => $this->ask('Name'),
-            'url' => $this->ask('App-URL'),
+            'url' => $this->ask('URL'),
         ];
 
         try {
-            Installer::tryAppDetails($details);
+            $this->validateValuesWithRules($details, self::$inputValidationRules['app']);
         } catch (\InvalidArgumentException $e) {
             $this->error($e->getMessage());
             $this->askAppDetails();
@@ -141,40 +215,21 @@ class InstallCommand extends Command
                     : $presetName
             ), true);
 
-        $this->fillUpDefaultUserPresetDetails();
-        $this->fillUpDefaultDatabasePresetDetails();
     }
 
-    /**
-     * If a preset is provided and the key 'user' exists, merge the preset with default user-details that are optional but required for validation
-     */
-    protected function fillUpDefaultUserPresetDetails(): void
+    protected function addPresetThemesAndPluginsToInstaller()
     {
-        if (isset($this->loadedPresetDetails['user']) && isset($this->loadedPresetDetails['user']['password'])) {
-            $this->loadedPresetDetails['user']['password_confirmation'] = $this->loadedPresetDetails['user']['password'];
+        if (isset($this->loadedPresetDetails['plugins']) && is_array($this->loadedPresetDetails['plugins'])) {
+            $this->info('Loading plugins from preset...');
+            foreach ($this->loadedPresetDetails['plugins'] as $plugin) {
+                if (isset($plugin['name']) && isset($plugin['version'])) {
+                    $this->installer->addPlugin($plugin['name'], $plugin['version']);
+                }
+            }
         }
-    }
 
-    /**
-     * If a preset is provided and the key 'database' exists, merge the preset with default database-details that are optional but required for validation
-     */
-    protected function fillUpDefaultDatabasePresetDetails(): void
-    {
-        if (isset($this->loadedPresetDetails['database'])) {
-            $this->loadedPresetDetails['database'] = $this->loadedPresetDetails['database'] + [
-                    'port' => 3306,
-                    'driver' => 'mysql',
-                    'prefix' => ''
-                ];
-        }
-    }
-
-    /**
-     *
-     */
-    protected function addThemesFromPresetToInstaller()
-    {
         if (isset($this->loadedPresetDetails['themes']) && is_array($this->loadedPresetDetails['themes'])) {
+            $this->info('Loading themes from preset...');
             foreach ($this->loadedPresetDetails['themes'] as $theme) {
                 if (isset($theme['name']) && isset($theme['version'])) {
                     $activeForModules = $theme['active'] ?? [];
@@ -198,27 +253,40 @@ class InstallCommand extends Command
         $this->info('Welcome! This CLI will guide you through the installation of latus. This won\'t take long, I promise! ');
 
         $this->warn('#1 - Database Details');
-        $database_details = $this->askDatabaseDetails();
+        $this->databaseDetails = $this->askDatabaseDetails();
 
         $this->warn('#2 - Admin Account');
-        $user_details = $this->askUserDetails();
+        $this->userDetails = $this->askUserDetails();
 
         $this->warn('#3 - Application');
-        $app_details = $this->askAppDetails();
+        $this->appDetails = $this->askAppDetails();
 
-        $installer = new Installer($database_details, $user_details, $app_details);
-        $installer->setCli($this);
-
-        $this->installer = $installer;
-
-        $this->addThemesFromPresetToInstaller();
-
-        try {
-            $installer->commenceInstallation();
-        } catch (\Exception $e) {
-            $this->error($e->getMessage());
-        }
+        $this->commenceInstallation();
 
         return 0;
     }
+
+    protected function commenceInstallation()
+    {
+        $this->installer->setCli($this);
+
+        $this->info('Initiating installer...');
+        $this->installer->build();
+
+        $this->addPresetThemesAndPluginsToInstaller();
+
+        try {
+            $this->info('Attempting installation...');
+            $this->installer->apply($this->databaseDetails, $this->appDetails, $this->userDetails);
+        } catch (\Exception $exception) {
+            $this->error($exception->getMessage());
+            exit(1);
+        }
+
+        $this->installer->destroy();
+
+        $this->info('Installation finished!');
+    }
+
+
 }
