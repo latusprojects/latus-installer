@@ -55,7 +55,7 @@ class InstallCommand extends Command
         'user' => [
             'username' => 'required|min:5|max:50',
             'email' => 'required|email',
-            'password' => 'required|string|min:8|max:255|confirmed'
+            'password' => 'required|string|min:8|max:255'
         ]
     ];
 
