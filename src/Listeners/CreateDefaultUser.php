@@ -16,6 +16,6 @@ class CreateDefaultUser
     {
         $user = $userService->createUser($event->details);
 
-        DefaultUserCreated::dispatch(['user' => $user]);
+        DefaultUserCreated::dispatch($user);
     }
 }

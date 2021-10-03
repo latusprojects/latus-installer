@@ -85,7 +85,7 @@ abstract class Installer
 
     protected function provideDatabaseDetails(array $details)
     {
-        DatabaseDetailsProvided::dispatch(['details' => [
+        DatabaseDetailsProvided::dispatch([
             'host' => $details['host'],
             'username' => $details['username'],
             'database' => $details['database'],
@@ -93,24 +93,24 @@ abstract class Installer
             'port' => $details['port'] ?? 3306,
             'driver' => $details['driver'] ?? 'mysql',
             'prefix' => $details['prefix'] ?? '',
-        ]]);
+        ]);
     }
 
     protected function provideUserDetails(array $details)
     {
-        UserDetailsProvided::dispatch(['details' => [
+        UserDetailsProvided::dispatch([
             'name' => $details['name'],
             'email' => $details['email'],
             'password' => $details['password'],
-        ]]);
+        ]);
     }
 
     protected function provideAppDetails(array $details)
     {
-        AppDetailsProvided::dispatch(['details' => [
+        AppDetailsProvided::dispatch([
             'name' => $details['name'],
             'url' => $details['url']
-        ]]);
+        ]);
     }
 
     /**
@@ -150,12 +150,12 @@ abstract class Installer
 
     protected function createMasterRepository()
     {
-        InstallableComposerRepositoryProvided::dispatch(['repositoryData' => [
+        InstallableComposerRepositoryProvided::dispatch([
             'name' => 'latusprojects.repo.repman.io',
             'url' => 'https://latusprojects.repo.repman.io',
             'type' => 'composer',
             'status' => ComposerRepository::STATUS_ACTIVATED
-        ]]);
+        ]);
     }
 
     protected function getMasterRepository(): ComposerRepository
@@ -176,28 +176,28 @@ abstract class Installer
         $masterRepositoryId = $this->getMasterRepository()->id;
 
         foreach ($this->themes as $themeName => $themeVersion) {
-            InstallableThemeProvided::dispatch(['themeData' => [
+            InstallableThemeProvided::dispatch([
                 'name' => $themeName,
                 'supports' => [],
                 'repository_id' => $masterRepositoryId,
                 'target_version' => $themeVersion,
                 'status' => Theme::STATUS_ACTIVE
-            ]]);
+            ]);
         }
 
         foreach ($this->plugins as $pluginName => $pluginVersion) {
-            InstallablePluginProvided::dispatch(['pluginData' => [
+            InstallablePluginProvided::dispatch([
                 'name' => $pluginName,
                 'repository_id' => $masterRepositoryId,
                 'target_version' => $pluginVersion,
                 'status' => Theme::STATUS_ACTIVE
-            ]]);
+            ]);
         }
     }
 
     protected function provideActiveModules()
     {
-        ActiveModulesProvided::dispatch(['activeModules' => $this->getActiveModules()]);
+        ActiveModulesProvided::dispatch($this->getActiveModules());
     }
 
     protected function getActiveModules(): array
