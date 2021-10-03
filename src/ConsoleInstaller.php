@@ -3,6 +3,7 @@
 namespace Latus\Installer;
 
 use Illuminate\Console\Command;
+use Latus\Installer\Jobs\DisableWebInstaller;
 
 class ConsoleInstaller extends Installer
 {
@@ -11,5 +12,12 @@ class ConsoleInstaller extends Installer
     public function setCli(Command $cli)
     {
         $this->cli = $cli;
+    }
+
+    public function destroy()
+    {
+        parent::destroy();
+
+        DisableWebInstaller::dispatchSync();
     }
 }
