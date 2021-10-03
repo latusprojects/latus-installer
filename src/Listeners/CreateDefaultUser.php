@@ -8,13 +8,18 @@ use Latus\Permissions\Services\UserService;
 
 class CreateDefaultUser
 {
+    public function __construct(
+        protected UserService $userService
+    )
+    {
+    }
 
     /**
      * @throws \InvalidArgumentException
      */
-    public function handle(UserDetailsProvided $event, UserService $userService)
+    public function handle(UserDetailsProvided $event,)
     {
-        $user = $userService->createUser($event->details);
+        $user = $this->userService->createUser($event->details);
 
         DefaultUserCreated::dispatch($user);
     }
