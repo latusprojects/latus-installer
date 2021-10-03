@@ -15,7 +15,6 @@ use Latus\Installer\Events\InstallableComposerRepositoryProvided;
 use Latus\Installer\Events\InstallablePluginProvided;
 use Latus\Installer\Events\InstallableThemeProvided;
 use Latus\Installer\Events\UserDetailsProvided;
-use Latus\Installer\Jobs\DisableWebInstaller;
 use Latus\Plugins\Models\ComposerRepository;
 use Latus\Plugins\Models\Theme;
 use Latus\Plugins\Services\ComposerRepositoryService;
@@ -66,7 +65,6 @@ abstract class Installer
     {
         app()->bind('latus-installer', null);
         Config::set('database.connections.latus_installer', null);
-        DisableWebInstaller::dispatchAfterResponse();
     }
 
     public function addTheme(string $theme, string $version, array $activeForModules = []): void
