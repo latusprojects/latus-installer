@@ -32,6 +32,11 @@ class RolePermissionSeeder extends Seeder
         'content.event.*',
     ];
 
+    public const USER_PERMISSIONS = [
+        'module.admin',
+        'dashboard.overview',
+    ];
+
     public function __construct(
         protected RoleService       $roleService,
         protected PermissionService $permissionService,
@@ -46,16 +51,24 @@ class RolePermissionSeeder extends Seeder
      */
     public function run()
     {
+        $this->grantPermissionsToRole('admin', self::ADMIN_PERMISSIONS);
+        $this->grantPermissionsToRole('user', self::USER_PERMISSIONS);
+    }
+
+    protected function grantPermissionsToRole(string $role, array $permissions)
+    {
         /**
-         * @var Role $admin_role
+         * @var Role $role
          */
-        $admin_role = $this->roleService->findByName('admin');
-        foreach (self::ADMIN_PERMISSIONS as $permission_name) {
+        $role = $this->roleService->findByName($role);
+        foreach ($permissions as $permissionName) {
             /**
              * @var Permission $permission
              */
-            $permission = $this->permissionService->findByName($permission_name);
-            $this->roleService->addPermissionToRole($admin_role, $permission);
+            $permission = $this->permissionService->findByName($permissionName);
+            if (!$this->roleService->roleHasPermission($role, $permission)) {
+                $this->roleService->addPermissionToRole($role, $permission);
+            }
         }
     }
 }

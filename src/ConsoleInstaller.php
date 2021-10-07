@@ -14,10 +14,4 @@ class ConsoleInstaller extends Installer
         $this->cli = $cli;
     }
 
-    public function destroy()
-    {
-        parent::destroy();
-
-        DisableWebInstaller::dispatchSync();
-    }
 }

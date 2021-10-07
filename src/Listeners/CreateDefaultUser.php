@@ -17,7 +17,7 @@ class CreateDefaultUser
     /**
      * @throws \InvalidArgumentException
      */
-    public function handle(UserDetailsProvided $event,)
+    public function handle(UserDetailsProvided $event)
     {
         $user = $this->userService->createUser($event->details);
 
