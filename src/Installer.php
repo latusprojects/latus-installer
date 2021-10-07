@@ -7,6 +7,8 @@ namespace Latus\Installer;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Latus\Helpers\Paths;
 use Latus\Installer\Database\DynamicSeeder;
 use Latus\Installer\Events\ActiveModulesProvided;
 use Latus\Installer\Events\AppDetailsProvided;
@@ -65,6 +67,8 @@ abstract class Installer
     {
         app()->bind('latus-installer', null);
         Config::set('database.connections.latus_installer', null);
+
+        File::put(Paths::basePath('.installed'), '');
     }
 
     public function addTheme(string $theme, string $version, array $activeForModules = []): void
