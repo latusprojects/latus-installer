@@ -20,7 +20,6 @@ class InstallPlugin
 
     /**
      * @param InstallablePluginProvided $event
-     * @throws ComposerCLIException
      */
     public function handle(InstallablePluginProvided $event)
     {
@@ -28,6 +27,6 @@ class InstallPlugin
          * @var Plugin $plugin
          */
         $plugin = $this->pluginService->createPlugin($event->pluginData);
-        $this->runComposer($plugin);
+        $this->requiresPackageToFile($plugin);
     }
 }

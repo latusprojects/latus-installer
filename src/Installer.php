@@ -3,6 +3,7 @@
 
 namespace Latus\Installer;
 
+ini_set('memory_limit', '512M');
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
@@ -16,8 +17,11 @@ use Latus\Installer\Events\DatabaseDetailsProvided;
 use Latus\Installer\Events\InstallableComposerRepositoryProvided;
 use Latus\Installer\Events\InstallablePluginProvided;
 use Latus\Installer\Events\InstallableThemeProvided;
+use Latus\Installer\Events\PackagesInstalled;
 use Latus\Installer\Events\UserDetailsProvided;
+use Latus\Plugins\Composer\CLInterface;
 use Latus\Plugins\Models\ComposerRepository;
+use Latus\Plugins\Models\Plugin;
 use Latus\Plugins\Models\Theme;
 use Latus\Plugins\Services\ComposerRepositoryService;
 use Latus\Plugins\Services\ThemeService;
@@ -59,8 +63,16 @@ abstract class Installer
         $this->provideAppDetails($appDetails);
         $this->provideUserDetails($userDetails);
 
+        $this->createMetaPackages();
         $this->installComposerPackages();
         $this->provideActiveModules();
+
+        $this->dispatchPackagesInstalledEvent();
+    }
+
+    public function dispatchPackagesInstalledEvent()
+    {
+        PackagesInstalled::dispatch();
     }
 
     public function destroy()
@@ -173,6 +185,73 @@ abstract class Installer
         return $this->masterRepository;
     }
 
+    protected function createMetaPackages()
+    {
+        $packages = [
+            'latus-packages/plugins' => str_replace('\\', '/', Paths::pluginPath()),
+            'latus-packages/themes' => str_replace('\\', '/', Paths::themePath()),
+        ];
+
+        $composerData = array(
+            'name' => '',
+            'type' => 'metapackage',
+            'version' => '1.0.0',
+            'require' => [],
+        );
+
+        foreach ($packages as $packageName => $path) {
+            File::ensureDirectoryExists($path);
+            $composerData['name'] = $packageName;
+            File::put($path . 'composer.json', json_encode($composerData, JSON_FORCE_OBJECT));
+        }
+
+        $this->createMetaPackageRepositories();
+    }
+
+    protected function createMetaPackageRepositories()
+    {
+        $cli = new CLInterface();
+        $cli->setIsQuiet(true);
+
+        $repositories = array(
+            'latus-packages/plugins' => str_replace('\\', '/', Paths::pluginPath()),
+            'latus-packages/themes' => str_replace('\\', '/', Paths::themePath()),
+        );
+
+        $composerData = json_decode(File::get(Paths::basePath('composer.json')), true);
+        if (!isset($composerData['repositories'])) {
+            $composerData['repositories'] = [];
+        }
+
+        foreach ($repositories as $repositoryName => $repositoryUrl) {
+            $composerData['repositories'][$repositoryName] = [
+                'type' => 'path',
+                'url' => $repositoryUrl,
+                'symlink' => true
+            ];
+        }
+
+        File::put(Paths::basePath('composer.json'), json_encode($composerData));
+
+        $this->requireMetaPackages();
+    }
+
+    protected function requireMetaPackages()
+    {
+        $cli = new CLInterface();
+        $cli->setIsQuiet(true);
+
+
+        $packages = array(
+            'latus-packages/plugins' => '1.0.0',
+            'latus-packages/themes' => '1.0.0',
+        );
+
+        foreach ($packages as $packageName => $packageVersion) {
+            $cli->requirePackage($packageName, $packageVersion, false);
+        }
+    }
+
     protected function installComposerPackages()
     {
         $masterRepositoryId = $this->getMasterRepository()->id;
@@ -192,9 +271,11 @@ abstract class Installer
                 'name' => $pluginName,
                 'repository_id' => $masterRepositoryId,
                 'target_version' => $pluginVersion,
-                'status' => Theme::STATUS_ACTIVE
+                'status' => Plugin::STATUS_ACTIVATED
             ]);
         }
+
+
     }
 
     protected function provideActiveModules()

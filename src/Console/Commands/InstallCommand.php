@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 use Latus\Helpers\Paths;
 use Latus\Installer\ConsoleInstaller;
+use Latus\Installer\InstallationPurger;
 
 class InstallCommand extends Command
 {
@@ -64,7 +65,7 @@ class InstallCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'latus:install {--preset=}';
+    protected $signature = 'latus:install {--preset=} {--force}';
 
     /**
      * The console command description.
@@ -195,6 +196,33 @@ class InstallCommand extends Command
         return $details;
     }
 
+    protected function purgeOrContinue()
+    {
+        if ($this->option('force')) {
+            $this->purge();
+            return;
+        }
+
+        if (File::exists(Paths::basePath('.installed'))) {
+            if ($this->confirm('An already existing installation was found, do you want to continue? This will clear all plugins, themes and databases.')) {
+                $this->purge();
+            }
+        }
+    }
+
+    protected function purge()
+    {
+        $this->info('Purging old installation...');
+        $purger = new InstallationPurger();
+
+        try {
+            $purger->run();
+        } catch (\Exception $e) {
+            $this->error($e->getMessage());
+        }
+        $this->info('Old installation purged!');
+    }
+
     /**
      * @throws FileNotFoundException
      */
@@ -247,6 +275,8 @@ class InstallCommand extends Command
      */
     public function handle(): int
     {
+
+        $this->purgeOrContinue();
 
         $this->loadPreset();
 

@@ -20,7 +20,6 @@ class InstallTheme
 
     /**
      * @param InstallableThemeProvided $event
-     * @throws ComposerCLIException
      */
     public function handle(InstallableThemeProvided $event)
     {
@@ -28,6 +27,6 @@ class InstallTheme
          * @var Theme $theme
          */
         $theme = $this->themeService->createTheme($event->themeData);
-        $this->runComposer($theme);
+        $this->requiresPackageToFile($theme);
     }
 }
