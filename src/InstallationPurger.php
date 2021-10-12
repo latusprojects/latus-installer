@@ -24,9 +24,18 @@ class InstallationPurger
      */
     public function run()
     {
+        $this->removeCachedListeners();
         $this->removeMetaPackages();
         $this->purgeDatabase();
         $this->removeInstallationLockFile();
+    }
+
+    protected function removeCachedListeners()
+    {
+        $filePath = Paths::basePath('bootstrap/cache/latus-package-events.php');
+        if (stream_resolve_include_path($filePath)) {
+            File::delete($filePath);
+        }
     }
 
     protected function purgeDatabase()
