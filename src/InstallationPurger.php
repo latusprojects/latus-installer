@@ -61,8 +61,8 @@ class InstallationPurger
             $cli->removeRepository($package);
         }
 
-        File::deleteDirectory(Paths::pluginPath());
-        File::deleteDirectory(Paths::themePath());
+        File::delete(Paths::pluginPath('composer.json'));
+        File::delete(Paths::themePath('composer.json'));
     }
 
     protected function removeInstallationLockFile()
