@@ -248,7 +248,7 @@ abstract class Installer
         );
 
         foreach ($packages as $packageName => $packageVersion) {
-            $cli->requirePackage($packageName, $packageVersion, false);
+            $cli->requirePackage($packageName, $packageVersion);
         }
     }
 
