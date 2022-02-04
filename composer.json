@@ -29,9 +29,16 @@
       "providers": [
         "Latus\\Installer\\Providers\\InstallerServiceProvider"
       ]
+    },
+    "branch-alias": {
+      "dev-develop": "0.2.x-dev"
     }
   },
   "repositories": {
+    "plugins-dev": {
+      "type": "path",
+      "url": "P:\\latus-projects\\laravel-packages\\latus-plugins"
+    },
     "0": {
       "type": "composer",
       "url": "https://latusprojects.repo.repman.io"
