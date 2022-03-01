@@ -5,6 +5,8 @@ namespace Latus\Installer\Providers;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 use Latus\Installer\Console\Commands\InstallCommand;
+use Latus\Installer\Console\Commands\UpdatePluginCommand;
+use Latus\Installer\Console\Commands\UpdateThemeCommand;
 use Latus\Installer\Providers\Traits\RegistersSeeders;
 
 class InstallerServiceProvider extends LaravelServiceProvider
@@ -20,6 +22,8 @@ class InstallerServiceProvider extends LaravelServiceProvider
     {
         $this->commands([
             InstallCommand::class,
+            UpdatePluginCommand::class,
+            UpdateThemeCommand::class,
         ]);
 
         $this->app->register(EventServiceProvider::class);
