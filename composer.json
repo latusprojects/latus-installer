@@ -10,8 +10,8 @@
   ],
   "require": {
     "php": "^8.0",
-    "laravel/framework": "8.*",
-    "jackiedo/dotenv-editor": "^1.2",
+    "laravel/framework": "^9",
+    "jackiedo/dotenv-editor": "^2",
     "latusprojects/latus-permissions": "0.2.*",
     "latusprojects/latus-plugins": "0.2.*"
   },
